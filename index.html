@@ -73,10 +73,98 @@
 <div class="detail"><small>EMAIL</small><a href="mailto:akpackfitness@gmail.com">akpackfitness@gmail.com</a></div>
 <div class="detail"><small>INSTAGRAM</small><a href="https://www.instagram.com/ak_pack_fitness__/" target="_blank" rel="noopener">@ak_pack_fitness__ ↗</a></div>
 <div class="contact-actions"><a class="btn ghost" href="https://www.google.com/maps/search/?api=1&query=2nd+Floor%2C+Opp.+Indus+Motors%2C+Above+Royal+Enfield+Showroom%2C+Keetholi%2C+Kodungallur" target="_blank" rel="noopener">GET DIRECTIONS ↗</a><a class="btn ghost" href="mailto:akpackfitness@gmail.com">EMAIL US ↗</a></div></div></div>
-<form class="contact-card" id="enquiry"><div class="eyebrow" style="margin-bottom:23px">MEMBERSHIP ENQUIRY</div><div class="form-row"><label for="name">YOUR NAME</label><input id="name" name="name" required autocomplete="name" placeholder="Enter your name"></div><div class="form-row"><label for="phone">YOUR PHONE NUMBER</label><input id="phone" name="phone" required inputmode="tel" autocomplete="tel" placeholder="Enter your number"></div><div class="form-row"><label for="interest">WHAT ARE YOU INTERESTED IN?</label><select id="interest" name="interest"><option>Membership enquiry</option><option>Strength training</option><option>Fitness and conditioning</option><option>Personal training</option><option>Visit the gym</option></select></div><div class="form-row"><label for="contact-number">SEND ENQUIRY TO</label><select id="contact-number" name="contact-number"><option value="917736336845">+91 77363 36845</option><option value="916238002245">+91 62380 02245</option></select></div><button class="btn" type="submit" style="width:100%">SEND WHATSAPP ENQUIRY ↗</button></form>
+<form class="contact-card" id="enquiry"><div class="eyebrow" style="margin-bottom:23px">MEMBERSHIP ENQUIRY</div><div class="form-row"><label for="name">YOUR NAME</label><input id="name" name="name" required autocomplete="name" placeholder="Enter your name"></div><div class="form-row"><label for="phone">YOUR PHONE NUMBER</label><input id="phone" name="phone" required inputmode="tel" autocomplete="tel" placeholder="Enter your number"></div><div class="form-row"><label for="interest">WHAT ARE YOU INTERESTED IN?</label><select id="interest" name="interest"><option>Membership enquiry</option><option>Strength training</option><option>Fitness and conditioning</option><option>Personal training</option><option>Visit the gym</option></select></div><div class="form-row"><label for="contact-number">SEND ENQUIRY TO</label><select id="contact-number" name="contact-number"><option value="917736336845">+91 77363 36845</option><option value="916238002245">+91 62380 02245</option></select></div><p id="enquiry-status" role="status" aria-live="polite" style="min-height:20px;color:#aaa6a1;font-size:12px;line-height:1.6"></p><button class="btn" id="enquiry-submit" type="submit" style="width:100%">SEND ENQUIRY ↗</button></form>
 </div></section></main>
 <footer class="footer"><div class="wrap footer-inner"><span>© <span id="year"></span> AK PACK Fitness.</span><span>KEETHOLI · KODUNGALLUR</span></div></footer><div class="mobile-cta"><a class="btn" href="#contact">JOIN THE PACK ↗</a></div>
+<script src="assets/js/appwrite-config.js"></script>
 <script>
 document.getElementById('year').textContent=new Date().getFullYear();
-document.getElementById('enquiry').addEventListener('submit',e=>{e.preventDefault();const name=document.getElementById('name').value.trim(),phone=document.getElementById('phone').value.trim(),interest=document.getElementById('interest').value,destination=document.getElementById('contact-number').value;const msg=encodeURIComponent('Hi AK PACK Fitness, my name is '+name+'. My phone number is '+phone+'. I would like to enquire about: '+interest+'. Please share the details.');window.open('https://wa.me/'+destination+'?text='+msg,'_blank','noopener');});
+
+const enquiryForm = document.getElementById('enquiry');
+const enquiryStatus = document.getElementById('enquiry-status');
+const enquirySubmit = document.getElementById('enquiry-submit');
+
+enquiryForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!enquiryForm.reportValidity()) return;
+
+  const payload = {
+    name: document.getElementById('name').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    interest: document.getElementById('interest').value,
+    preferredContact: document.getElementById('contact-number').value
+  };
+  const destination = payload.preferredContact;
+  const message = encodeURIComponent(
+    'Hi AK PACK Fitness, my name is ' + payload.name +
+    '. My phone number is ' + payload.phone +
+    '. I would like to enquire about: ' + payload.interest +
+    '. Please share the details.'
+  );
+  const whatsappUrl = 'https://wa.me/' + destination + '?text=' + message;
+
+  enquirySubmit.disabled = true;
+  enquirySubmit.textContent = 'SENDING…';
+  enquiryStatus.textContent = 'Submitting your enquiry…';
+
+  // Open the WhatsApp tab inside the user gesture to avoid popup blocking after the network call.
+  const whatsappWindow = window.open('about:blank', '_blank');
+
+  try {
+    const config = window.AKPACK_APPWRITE;
+    if (config?.enabled && config.projectId && config.functionId && config.endpoint) {
+      const response = await fetch(
+        config.endpoint.replace(/\/$/, '') + '/functions/' +
+        encodeURIComponent(config.functionId) + '/executions',
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-appwrite-project': config.projectId
+          },
+          body: JSON.stringify({
+            body: JSON.stringify(payload),
+            async: false,
+            path: '/',
+            method: 'POST'
+          })
+        }
+      );
+
+      const execution = await response.json().catch(() => ({}));
+      let functionResult = {};
+      try {
+        functionResult = typeof execution.responseBody === 'string'
+          ? JSON.parse(execution.responseBody)
+          : (execution.responseBody || {});
+      } catch {
+        functionResult = {};
+      }
+
+      if (!response.ok || execution.status !== 'completed' || !functionResult.ok) {
+        throw new Error(functionResult.message || 'The enquiry could not be saved.');
+      }
+      enquiryStatus.textContent = 'Enquiry saved securely. Opening WhatsApp…';
+    } else {
+      enquiryStatus.textContent = 'Online enquiry storage is not active yet. Opening WhatsApp…';
+    }
+
+    if (whatsappWindow) {
+      whatsappWindow.location.replace(whatsappUrl);
+    } else {
+      window.location.href = whatsappUrl;
+    }
+  } catch (error) {
+    enquiryStatus.textContent = 'Online saving failed. Your enquiry can still be sent through WhatsApp.';
+    if (whatsappWindow) {
+      whatsappWindow.location.replace(whatsappUrl);
+    } else {
+      window.location.href = whatsappUrl;
+    }
+    console.error('AK PACK enquiry submission:', error);
+  } finally {
+    enquirySubmit.disabled = false;
+    enquirySubmit.textContent = 'SEND ENQUIRY ↗';
+  }
+});
 </script></body></html>
