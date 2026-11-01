@@ -1,0 +1,20 @@
+{
+  "databaseId": "akpack-main",
+  "tableId": "enquiries",
+  "name": "Website Enquiries",
+  "rowSecurity": false,
+  "permissions": [],
+  "columns": [
+    {"key":"name","type":"varchar","size":100,"required":true},
+    {"key":"phone","type":"varchar","size":24,"required":true},
+    {"key":"interest","type":"varchar","size":80,"required":true},
+    {"key":"preferredContact","type":"varchar","size":24,"required":false},
+    {"key":"status","type":"varchar","size":20,"required":true,"default":"new"},
+    {"key":"source","type":"varchar","size":30,"required":true,"default":"website"},
+    {"key":"createdAt","type":"datetime","required":true}
+  ],
+  "indexes": [
+    {"key":"status_createdAt","type":"key","attributes":["status","createdAt"],"orders":["ASC","DESC"]},
+    {"key":"phone_lookup","type":"key","attributes":["phone"],"orders":["ASC"]}
+  ]
+}
