@@ -1,0 +1,8 @@
+{
+  "name": "ak-pack-enquiry-function",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}
