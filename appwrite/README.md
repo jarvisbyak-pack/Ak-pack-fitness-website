@@ -25,7 +25,7 @@ Create these columns:
 | source | varchar(30) | yes | `website` |
 | createdAt | datetime | yes | ISO-8601 timestamp |
 
-Keep table-level client permissions closed. The public website must not receive an Appwrite API key or direct write access to the table. Only the Function's server-side key should have the minimum `rows.write` scope. The Function should be executable by `any` because the public website is anonymous; it validates and rate-limits requests before inserting rows. Add a WAF/rate-limit policy before production activation.
+Keep table-level client permissions closed. The public website must not receive an Appwrite API key or direct write access to the table. Only the Function's server-side key should have the minimum `rows.write` scope. The Function should be executable by `any` because the public website is anonymous; it validates requests before inserting rows. Rate limiting is not implemented in the staged function yet; add an Appwrite WAF/rate-limit policy before production activation.
 
 ## Function environment
 
@@ -53,7 +53,7 @@ Project IDs and Function IDs are public identifiers. Never put API keys, passwor
 2. Register the website hostname as a Web platform.
 3. Create the database and table with the schema above.
 4. Create and deploy the Node.js Function with the minimum required API key scope.
-5. Add rate limiting / abuse protection and configure Function execution permissions.
+5. Add and verify rate limiting / abuse protection (not yet implemented in the staged function) and configure Function execution permissions.
 6. Configure the frontend public identifiers.
 7. Test valid submission, invalid phone, missing fields, duplicate submission, failure fallback, and mobile Safari.
 8. Confirm records appear in Appwrite and WhatsApp handoff still works.
